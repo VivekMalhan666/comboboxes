@@ -3,20 +3,24 @@ import "./App.css";
 import Combobox from "./component/combobox/combobox";
 
 function App() {
-  const [userSelection, setUserSelection] = useState<string>("");
+  const [userSelection, setUserSelection] = useState<string | null>(null);
   const options = [
-    { name: "Albertsons", value: "albertsons" },
-    { name: "TCP", value: "tcp" },
-    { name: "Manscaped", value: "manscaped" },
+    { name: "Albertsons" },
+    { name: "BJs" },
+    { name: "Marriott" },
+    { name: "Verizon" },
+    { name: "ASO" },
+    { name: "GenesisX", subcontent: "Innersource" },
+    { name: "TCP" },
+    { name: "Manscaped" },
   ];
   console.log(userSelection);
   return (
     <Combobox
-      labelName="name"
       options={options}
-      onSelect={setUserSelection}
-      delayTime={5}
-      placeholder="Choose a Name"
+      onChange={setUserSelection}
+      selectionKey="name"
+      uniqueKey="name"
     />
   );
 }
