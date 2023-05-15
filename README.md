@@ -1,46 +1,79 @@
-# Getting Started with Create React App
+# Combobox Component
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+The `Combobox` component is a reusable React component that provides a searchable and selectable list of options, designed to be used as an input control. This is an accessible and keyboard-friendly dropdown combobox UI element. Users can select an option from the dropdown list or enter a custom value.
 
-## Available Scripts
+## Props
 
-In the project directory, you can run:
+The component accepts the following props:
 
-### `npm start`
+| Prop                 | Type                                            | Required | Default | Description                                                                                                          |
+| -------------------- | ----------------------------------------------- | -------- | ------- | -------------------------------------------------------------------------------------------------------------------- |
+| options              | `Object[]` or `string[]`                        | Yes      | -       | An array of options for the dropdown. Each option can be an object with a `value` and `label` property, or a string. |
+| labelName            | `string`                                        | No       | -       | A label for the combobox.                                                                                            |
+| delayTime            | `number`                                        | No       | `1`     | The delay time (in milliseconds) before filtering options based on user input.                                       |
+| placeholder          | `string`                                        | No       | -       | A placeholder text for the input field.                                                                              |
+| onChange             | `(value: string \| null) => void`               | Yes      | -       | A function to be called when an option is selected. The selected value is passed as an argument.                     |
+| isSelectedIconOnLeft | `Boolean`                                       | No       | `false` | Determines whether the selected icon is displayed on the left or right of the input field.                           |
+| renderOption         | `(option: Object \| string) => React.ReactNode` | No       | -       | A function to render a custom option.                                                                                |
+| selectionKey         | `string` or `keyof Object`                      | Yes      | -       | The key to use when filtering options based on user input.                                                           |
+| uniqueKey            | `string`                                        | Yes      | -       | A unique key to identify the component.                                                                              |
+| value                | `string`                                        | No       | `""`    | The initial value for the input field.                                                                               |
+| IconForDropDown      | `ReactElement` or `string`                      | No       | -       | A custom icon to use for the dropdown button.                                                                        |
+| className            | `string`                                        | No       | -       | A custom CSS class to apply to the component.                                                                        |
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Usage
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+To use the `Combobox` component, import it into your React component and render it with the required props.
 
-### `npm test`
+Example:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```jsx
+import Combobox from "./Combobox";
 
-### `npm run build`
+function App() {
+  const options = [
+    { id: 1, name: "Option 1" },
+    { id: 2, name: "Option 2" },
+    { id: 3, name: "Option 3" },
+  ];
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+  const handleChange = (value) => {
+    console.log(`Selected option: ${value}`);
+  };
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+  return (
+    <Combobox
+      options={options}
+      labelName="Select an option"
+      onChange={handleChange}
+      selectionKey="name"
+      uniqueKey="id"
+    />
+  );
+}
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Functionality
 
-### `npm run eject`
+The `Combobox` component provides the following functionality:
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+- Displays a dropdown button that can be clicked to open or close the options list.
+- Displays an input field that can be used to filter the options based on the user input.
+- Displays the selected option(s) as tags or a single tag with an icon indicating the selection status.
+- Allows users to select one or more options from the list.
+- Allows users to remove the selected option(s).
+- Allows users to navigate the options list using the keyboard.
+- Closes the options list when the user clicks outside of the component or presses the escape key.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Accessibility
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+This component is designed to be accessible and keyboard-friendly. It includes the following features:
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+- ARIA attributes for the combobox, input field, and listbox
+- Keyboard navigation for the dropdown list
+- Focus management for the input field and dropdown list
+- Support for screen readers
 
-## Learn More
+## License
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+This component is licensed under the MIT License.
