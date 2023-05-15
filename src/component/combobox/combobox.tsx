@@ -209,7 +209,10 @@ const Combobox = ({
           aria-haspopup="listbox"
           tabIndex={-1}
         >
-          {selectedOption || placeholder || `Select ${labelName}`}
+          {selectedOption ||
+            placeholder ||
+            (labelName && `Select ${labelName}`) ||
+            "Choose an option"}
         </button>
         <button
           className="combobox-button-icon"
