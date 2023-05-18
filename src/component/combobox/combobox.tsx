@@ -4,17 +4,19 @@ import useOnClickOutside from "../../utils/useClickOutside";
 import DropDownIcon from "../Icons/DropDownIcon";
 import TickIcon from "../Icons/TickIcon";
 
+type Option = Object | string;
+
 type ComboBoxProps = {
-  options: Object[] | string[];
+  options: Option[];
   labelName?: string;
   delayTime?: number;
   placeholder?: string;
   onChange: (value: string | null) => void;
-  isSelectedIconOnLeft?: Boolean;
-  renderOption?: (option: Object | string) => React.ReactNode;
-  selectionKey: string | keyof Object;
+  isSelectedIconOnLeft?: boolean;
+  renderOption?: (option: Option) => React.ReactNode;
+  selectionKey: string | keyof Option;
   uniqueKey: string;
-  value?: string;
+  value?: string | string[];
   IconForDropDown?: ReactElement | string;
   className?: string;
 };
@@ -36,18 +38,18 @@ const Combobox = ({
   value = "",
   className,
 }: ComboBoxProps) => {
-  // Manage State for options
-  const [filteredOptions, setFilteredOptions] = useState<
-    ComboBoxProps["options"] | null
-  >(null);
+  const [filteredOptions, setFilteredOptions] = useState<Option[] | null>(null);
   const [selectedOption, setSelectedOption] = useState<
-    string | null | undefined | Array<string>
+    string | null | undefined | string[]
   >(value);
   const [search, setSearch] = useState<string | null>(null);
-  const [isOpen, setIsOpen] = useState<Boolean>(false);
+  const [isOpen, setIsOpen] = useState(false);
 
-  // toggle between button for dropdown and input based on user behaviour
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const optionsRef = useRef<HTMLDivElement>(null);
+  const activeOptionRef = useRef<HTMLLIElement | null>(null);
+  const listboxRef = useRef<HTMLUListElement | null>(null);
+
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
       searchInputRef.current.focus();
@@ -55,32 +57,36 @@ const Combobox = ({
     }
   }, [isOpen, options]);
 
-  // Filter options based on text input by the user
-  const filterOptions = (search: String | null) => {
-    if (!search || search?.length === 0) return options;
+  useEffect(() => {
+    if (selectedOption === null) {
+      setSearch("");
+    }
+  }, [selectedOption]);
+
+  const filterOptions = (search: string | null) => {
+    if (!search || search.length === 0) {
+      return options;
+    }
     return options?.filter((option) => {
-      return (option as any)[selectionKey]
-        .toLowerCase()
-        .includes(search.toLowerCase());
+      const optionValue =
+        typeof option === "object" ? (option as any)[selectionKey] : option;
+      return optionValue.toLowerCase().includes(search.toLowerCase());
     });
   };
 
-  // Enable Close on Outside Click
-  const optionsRef = useRef(null);
   const handleClickOutside = () => {
     setFilteredOptions(null);
     setIsOpen(false);
   };
+
   useOnClickOutside(optionsRef, handleClickOutside);
 
-  // Handle Remove Selection
   const handleRemoveSelection = () => {
     setSelectedOption(null);
     setSearch("");
     onChange(null);
   };
 
-  // Select an option
   const handleOptionSelect = (option: string) => {
     if (selectedOption === option) {
       handleRemoveSelection();
@@ -92,7 +98,6 @@ const Combobox = ({
     }
   };
 
-  // Filter options of input
   const userInputAction = ({ inputValue }: UserInput) => {
     setSearch(inputValue);
     setTimeout(() => {
@@ -101,65 +106,96 @@ const Combobox = ({
     setSelectedOption(null);
   };
 
-  // Keyboard accessibility
-  const activeOptionRef = useRef<HTMLLIElement | null>(null);
-  const listboxRef = useRef<HTMLUListElement | null>(null);
   const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
       setIsOpen(true);
-      (listboxRef.current?.firstChild as HTMLElement).focus();
-      activeOptionRef.current = listboxRef.current?.firstChild as HTMLLIElement;
+      activeOptionRef.current = listboxRef.current
+        ?.firstElementChild as HTMLLIElement;
+      activeOptionRef.current?.focus();
     }
   };
 
   const handleListboxKeyDown = (
-    event: React.KeyboardEvent<HTMLElement>,
-    name: string
+    event: React.KeyboardEvent<HTMLLIElement>,
+    selectedOption: string
   ) => {
-    if (event.key === "ArrowDown") {
+    const key = event.key;
+    const activeOption = activeOptionRef.current;
+    const firstOption = listboxRef.current?.firstElementChild as HTMLLIElement;
+    const lastOption = listboxRef.current?.lastElementChild as HTMLLIElement;
+
+    if (key === "ArrowDown") {
       event.preventDefault();
-      const nextOption = activeOptionRef.current?.nextSibling as Element | null;
-      if (nextOption) {
-        activeOptionRef.current?.setAttribute("aria-selected", "false");
-        activeOptionRef.current = nextOption as HTMLLIElement;
-        activeOptionRef.current?.setAttribute("aria-selected", "true");
-        (activeOptionRef.current as HTMLElement)?.focus();
+      if (activeOption !== lastOption) {
+        activeOptionRef.current =
+          activeOption?.nextElementSibling as HTMLLIElement;
+        activeOptionRef.current?.focus();
       }
-    } else if (event.key === "ArrowUp") {
+    } else if (key === "ArrowUp") {
       event.preventDefault();
-      const prevOption = activeOptionRef.current
-        ?.previousSibling as Element | null;
-      if (prevOption) {
-        activeOptionRef.current?.setAttribute("aria-selected", "false");
-        activeOptionRef.current = prevOption as HTMLLIElement;
-        activeOptionRef.current?.setAttribute("aria-selected", "true");
-        (activeOptionRef.current as HTMLElement)?.focus();
+      if (activeOption !== firstOption) {
+        activeOptionRef.current =
+          activeOption?.previousElementSibling as HTMLLIElement;
+        activeOptionRef.current?.focus();
       }
-    } else if (event.key === "Home") {
+    } else if (key === "Home") {
       event.preventDefault();
-      const firstOption = listboxRef.current?.firstChild as HTMLElement;
-      if (firstOption) {
-        firstOption.focus();
-      }
-    } else if (event.key === "End") {
+      firstOption?.focus();
+    } else if (key === "End") {
       event.preventDefault();
-      const lastOption = listboxRef.current?.lastChild as HTMLElement;
-      if (lastOption) {
-        lastOption.focus();
-      }
-    } else if (event.key === "Escape") {
+      lastOption?.focus();
+    } else if (key === "Escape") {
       event.preventDefault();
-      setSearch("");
-      setIsOpen(false);
-      setSelectedOption("");
-      if (searchInputRef.current) {
-        searchInputRef.current.focus();
-      }
-    } else if (event.key === "Enter" && selectedOption !== null) {
+      handleRemoveSelection();
+    } else if (key === "Enter" && selectedOption !== null) {
       event.preventDefault();
-      if (name) handleOptionSelect(name);
+      handleOptionSelect(selectedOption);
     }
+  };
+  const renderOption = (option: any) => {
+    // Custom rendering logic based on the option data
+    // Return the React element representing the option
+    return <span>{option}</span>;
+  };
+
+  const renderOptionItem = (option: any, index: number) => {
+    const optionLabel =
+      typeof option === "object" ? (option as any)[selectionKey] : option;
+    const optionKey =
+      typeof option === "object" ? (option as any)[uniqueKey] : index;
+    const isSelected =
+      optionLabel === selectedOption ||
+      (Array.isArray(selectedOption) && selectedOption.includes(optionLabel));
+
+    return (
+      <li
+        key={optionKey}
+        className={`combobox-option ${
+          isSelected ? "combobox-option-selected" : ""
+        }`}
+        id={`option-${optionKey}`}
+        role="option"
+        aria-selected={isSelected ? true : undefined}
+        onClick={() => handleOptionSelect(optionLabel)}
+        onKeyDown={(e) => handleListboxKeyDown(e, optionLabel)}
+        tabIndex={0}
+        ref={isSelected ? activeOptionRef : null}
+      >
+        {isSelected && (
+          <TickIcon
+            className={`${
+              isSelected && isSelectedIconOnLeft
+                ? "combobox-option-selected-left-icon"
+                : "combobox-option-selected-icon"
+            }`}
+          />
+        )}
+        {typeof option === "object" && renderOption
+          ? renderOption(optionLabel)
+          : option}
+      </li>
+    );
   };
 
   return (
@@ -184,28 +220,24 @@ const Combobox = ({
           placeholder={placeholder}
           ref={searchInputRef}
           onKeyDown={handleInputKeyDown}
-          onFocus={(event) => {
-            event.preventDefault();
-            if (search && search?.length === 0) setFilteredOptions(options);
-            else setFilteredOptions(filterOptions(search));
+          onFocus={() => {
+            if (search && search.length === 0) {
+              setFilteredOptions(options);
+            } else {
+              setFilteredOptions(filterOptions(search));
+            }
             setIsOpen(true);
           }}
           onInput={(event: React.ChangeEvent<HTMLInputElement>) => {
-            event.preventDefault();
             const inputValue = event.target.value;
             userInputAction({ inputValue });
           }}
         />
         <button
           className={`combobox-button ${
-            isOpen || (search && search?.length > 0) || selectedOption
-              ? "combobox-button-hide"
-              : ""
-          } `}
-          onClick={(event) => {
-            event.preventDefault();
-            setIsOpen(true);
-          }}
+            isOpen || search || selectedOption ? "combobox-button-hide" : ""
+          }`}
+          onClick={() => setIsOpen(true)}
           aria-haspopup="listbox"
           tabIndex={-1}
         >
@@ -216,10 +248,7 @@ const Combobox = ({
         </button>
         <button
           className="combobox-button-icon"
-          onClick={(event) => {
-            event.preventDefault();
-            setIsOpen(!isOpen);
-          }}
+          onClick={() => setIsOpen(!isOpen)}
           aria-haspopup="listbox"
           tabIndex={-1}
         >
@@ -229,54 +258,14 @@ const Combobox = ({
       {isOpen && (
         <ul
           className="combobox-options"
+          id={`${labelName}-listbox`}
           role="listbox"
-          aria-labelledby="combobox-label"
-          ref={listboxRef}
           tabIndex={-1}
+          ref={listboxRef}
         >
-          {filteredOptions?.map((option) => (
-            <li
-              className={`comobox-option ${
-                selectedOption === (option as any)[uniqueKey]
-                  ? "combobox-option-selected"
-                  : ""
-              }
-                ${
-                  selectedOption === (option as any)[uniqueKey] &&
-                  isSelectedIconOnLeft
-                    ? "combobox-option-selected-left"
-                    : ""
-                }`}
-              role="option"
-              tabIndex={0}
-              key={(option as any)[uniqueKey]}
-              ref={
-                selectedOption === (option as any)[uniqueKey]
-                  ? activeOptionRef
-                  : undefined
-              }
-              aria-selected={selectedOption === (option as any)[uniqueKey]}
-              onClick={(e) => {
-                e.preventDefault();
-                handleOptionSelect((option as any)[uniqueKey]);
-              }}
-              onKeyDown={(e) =>
-                handleListboxKeyDown(e, (option as any)[uniqueKey])
-              }
-            >
-              {selectedOption === (option as any)[uniqueKey] && (
-                <TickIcon
-                  className={`${
-                    selectedOption === (option as any)[uniqueKey] &&
-                    isSelectedIconOnLeft
-                      ? "combobox-option-selected-left-icon"
-                      : "combobox-option-selected-icon"
-                  }`}
-                />
-              )}
-              {(option as any)[uniqueKey]}
-            </li>
-          ))}
+          {filteredOptions?.map((option, index) =>
+            renderOptionItem(option, index)
+          )}
         </ul>
       )}
     </section>
