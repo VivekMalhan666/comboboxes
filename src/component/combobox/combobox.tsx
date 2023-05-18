@@ -217,7 +217,11 @@ const Combobox = ({
           className="combobox-input"
           value={search || value}
           id={labelName}
-          placeholder={placeholder}
+          placeholder={
+            placeholder ||
+            (labelName && `Select ${labelName}`) ||
+            "Choose an option"
+          }
           ref={searchInputRef}
           onKeyDown={handleInputKeyDown}
           onFocus={() => {
